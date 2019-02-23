@@ -7,6 +7,7 @@ import tf
 from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
+from teleop_utils.srv import GetPose
 
 class phantom_teleop:
     '''
@@ -23,6 +24,7 @@ class phantom_teleop:
         self.currentPose = PoseStamped()
         self.pub_path = rospy.Publisher('ee_path', Path, queue_size=10)
         self.path = Path()
+        self.service_pose = rospy.Service('teleop_pose',GetPose, self.returnPose)
 
     def callback(self, data_stream):
         self.transform = np.reshape(
@@ -58,4 +60,8 @@ class phantom_teleop:
 
         self.path.header.stamp = rospy.Time.now()
         self.path.header.frame_id = '/phantom'  
-        self.path.poses.append(self.currentPose)      
+        self.path.poses.append(self.currentPose)
+
+    def returnPose(self, resp):
+        return self.currentPose
+
