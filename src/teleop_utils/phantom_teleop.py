@@ -8,6 +8,7 @@ from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 from teleop_utils.srv import GetPose
+from copy import deepcopy
 
 class phantom_teleop:
     '''
@@ -21,7 +22,9 @@ class phantom_teleop:
         self.button2 = False
         rospy.Subscriber('pose_msg', Float32MultiArray, self.callback)
         self.pub_pose = rospy.Publisher('ee_pose', PoseStamped, queue_size=10)
+        self.pub_pose_next = rospy.Publisher('ee_pose_next', PoseStamped, queue_size=10)
         self.currentPose = PoseStamped()
+        self.nextPose = PoseStamped()
         self.pub_path = rospy.Publisher('ee_path', Path, queue_size=10)
         self.path = Path()
         self.service_pose = rospy.Service('teleop_pose',GetPose, self.returnPose)
@@ -40,6 +43,7 @@ class phantom_teleop:
         else:
             self.button2 = False
 
+        
         self.currentPose.pose.position.x = self.transform[2,3]
         self.currentPose.pose.position.y = self.transform[0,3]
         self.currentPose.pose.position.z = self.transform[1,3]
@@ -58,9 +62,12 @@ class phantom_teleop:
         self.currentPose.header.stamp = rospy.Time.now()
         self.currentPose.header.frame_id = '/phantom'
 
+        if self.button1:
+            self.nextPose = deepcopy(self.currentPose)
+
         self.path.header.stamp = rospy.Time.now()
         self.path.header.frame_id = '/phantom'  
-        self.path.poses.append(self.currentPose)
+        self.path.poses.append(self.nextPose)
 
     def returnPose(self, resp):
         return self.currentPose
