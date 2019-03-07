@@ -7,6 +7,7 @@ from sensor_msgs.msg import Joy
 from math import fabs
 from nav_msgs.msg import Path
 from copy import copy, deepcopy
+from teleop_utils.srv import SetPose, GetTeleop, GetTeleopResponse
 
 class XboxTel():
     def __init__(self, rate = 100):
@@ -31,11 +32,19 @@ class XboxTel():
         self.lastData = None
         self.button1 = False
         self.button2 = False
+        self.button3 = False
+        self.button4 = False
+        self.button5 = False
+        self.button6 = False
+        self.button7 = False
+
         self.path = Path()
         self.pub_pose = rospy.Publisher('xbox_pose', PoseStamped, queue_size=10)
         self.pub_path = rospy.Publisher('xbox_path', Path, queue_size=10)
         self.pub_pose_next = rospy.Publisher('xbox_pose_next', PoseStamped, queue_size=10)        
         rospy.Subscriber('joy', Joy, self.callback)
+        self.setPose_service = rospy.Service('set_xbox_pose',SetPose, self.set_pose)
+        self.getTeleop_service = rospy.Service('get_xbox_teleop',GetTeleop, self.get_teleop)
 
     def callback(self, data):
         # self.lastData = data
@@ -69,7 +78,32 @@ class XboxTel():
             self.button2 = True
         else:
             self.button2 = False
-        
+
+        if data.buttons[0] == 1:
+            self.button3 = True
+        else:
+            self.button3 = False
+
+        if data.buttons[2] == 1:
+            self.button4 = True
+        else:
+            self.button4 = False
+
+        if data.buttons[3] == 1:
+            self.button5 = True
+        else:
+            self.button5 = False
+
+        if data.buttons[6] == 1:
+            self.button6 = True
+        else:
+            self.button6 = False
+            
+        if data.buttons[7] == 1:
+            self.button7 = True
+        else:
+            self.button7 = False            
+
         if self.button2:
             self.nextPose = deepcopy(self.currentPose)
 
@@ -79,36 +113,10 @@ class XboxTel():
 
         if self.button1:
             self.path.poses = []
-# def tel():
-#     rospy.init_node('teleop_node')
-#     Teleoperator = XboxTel()
-#     r = rospy.get_param('~rate', 100)
-#     rate = rospy.Rate(r)
 
-#     while not rospy.is_shutdown():
-#         if Teleoperator.lastData != None:
-#             if fabs(Teleoperator.lastData.axes[1]) > 0.1:
-#                 Teleoperator.currentPose.pose.position.z += Teleoperator.lastData.axes[1] / r / 2
-#             if fabs(Teleoperator.lastData.axes[4]) > 0.1:
-#                 Teleoperator.currentPose.pose.position.x += -Teleoperator.lastData.axes[4] / r * 1
-#             if fabs(Teleoperator.lastData.axes[3]) > 0.1:
-#                 Teleoperator.currentPose.pose.position.y += -Teleoperator.lastData.axes[3] / r * 1
-#             if fabs(Teleoperator.lastData.axes[0]) > 0.1:
-#                 Teleoperator.yaw += Teleoperator.lastData.axes[0] / r * 2
-#             quaternion = tf.transformations.quaternion_from_euler(0, 0, Teleoperator.yaw)
-#             Teleoperator.currentPose.pose.orientation.x = quaternion[0]
-#             Teleoperator.currentPose.pose.orientation.y = quaternion[1]
-#             Teleoperator.currentPose.pose.orientation.z = quaternion[2]
-#             Teleoperator.currentPose.pose.orientation.w = quaternion[3]
-#         Teleoperator.currentPose.header.seq += 1
-#         Teleoperator.currentPose.header.stamp = rospy.Time.now()
-#         Teleoperator.pub_pose.publish(Teleoperator.currentPose)
-#         rate.sleep()
-
-
-
-# if __name__ == '__main__':
-#     try:
-#         tel()
-#     except rospy.ROSInterruptException:
-#         pass
+    def set_pose(self,req):
+        self.currentPose = req.pose
+        return True
+        
+    def get_teleop(self,req):
+        return self.nextPose, self.button1, self.button2, self.button3, self.button4, self.button5, self.button6, self.button7
