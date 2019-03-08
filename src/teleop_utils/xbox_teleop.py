@@ -18,7 +18,7 @@ class XboxTel():
         self.currentPose = PoseStamped()
         self.currentPose.header.seq = 0
         self.currentPose.header.stamp = rospy.Time.now()
-        self.currentPose.header.frame_id = '/xbox'
+        self.currentPose.header.frame_id = '/teleop'
         self.currentPose.pose.position.x = x
         self.currentPose.pose.position.y = y
         self.currentPose.pose.position.z = z
@@ -37,14 +37,15 @@ class XboxTel():
         self.button5 = False
         self.button6 = False
         self.button7 = False
-
         self.path = Path()
-        self.pub_pose = rospy.Publisher('xbox_pose', PoseStamped, queue_size=10)
-        self.pub_path = rospy.Publisher('xbox_path', Path, queue_size=10)
-        self.pub_pose_next = rospy.Publisher('xbox_pose_next', PoseStamped, queue_size=10)        
+        self.path.header.stamp = rospy.Time.now()        
+        self.path.header.frame_id = '/teleop'
         rospy.Subscriber('joy', Joy, self.callback)
-        self.setPose_service = rospy.Service('set_xbox_pose',SetPose, self.set_pose)
-        self.getTeleop_service = rospy.Service('get_xbox_teleop',GetTeleop, self.get_teleop)
+        self.pub_pose = rospy.Publisher('teleop_pose', PoseStamped, queue_size=10)
+        self.pub_path = rospy.Publisher('teleop_path', Path, queue_size=10)
+        self.pub_pose_next = rospy.Publisher('teleop_pose_next', PoseStamped, queue_size=10)        
+        self.setPose_service = rospy.Service('set_teleop_pose',SetPose, self.set_pose)
+        self.getTeleop_service = rospy.Service('get_teleop',GetTeleop, self.get_teleop)
 
     def callback(self, data):
         # self.lastData = data
@@ -104,12 +105,12 @@ class XboxTel():
         else:
             self.button7 = False            
 
+        self.path.header.stamp = rospy.Time.now()
+
         if self.button2:
             self.nextPose = deepcopy(self.currentPose)
-
-        self.path.header.stamp = rospy.Time.now()
-        self.path.header.frame_id = '/xbox'  
-        self.path.poses.append(self.nextPose)
+            # Append only when pressing button?
+            self.path.poses.append(self.nextPose)
 
         if self.button1:
             self.path.poses = []
