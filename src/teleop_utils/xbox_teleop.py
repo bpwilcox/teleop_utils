@@ -37,6 +37,8 @@ class XboxTel():
         self.button5 = False
         self.button6 = False
         self.button7 = False
+        self.button8 = False
+
         self.path = Path()
         self.path.header.stamp = rospy.Time.now()        
         self.path.header.frame_id = '/teleop'
@@ -103,7 +105,12 @@ class XboxTel():
         if data.buttons[7] == 1:
             self.button7 = True
         else:
-            self.button7 = False            
+            self.button7 = False
+
+        if data.buttons[8] == 1:
+            self.button8 = True
+        else:
+            self.button8 = False
 
         self.path.header.stamp = rospy.Time.now()
 
@@ -120,4 +127,4 @@ class XboxTel():
         return True
         
     def get_teleop(self,req):
-        return self.nextPose, self.button1, self.button2, self.button3, self.button4, self.button5, self.button6, self.button7
+        return self.nextPose, self.button1, self.button2, self.button3, self.button4, self.button5, self.button6, self.button7, self.button8
